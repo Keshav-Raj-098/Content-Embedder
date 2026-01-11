@@ -1,0 +1,7 @@
+opencv-python
+fastapi
+uvicorn
+pydantic
+dotenv
+pillow
+rich  // For rich text and beautiful formatting in the terminal
