@@ -4,9 +4,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.websocket.connection_manager import manager
 from src.websocket.ws_router import WSRouter as ws_router
 from src.websocket import ws_setup  # 👈 side-effect import (MANDATORY)
+from fastapi.staticfiles import StaticFiles
+from huggingface_hub import login
+import os
 
 
-from src import state
+
+login(token=os.environ.get("HUGGINGFACE_API_KEY"))
+
 
 # Routes Imports
 from src.routes.editor_routes import router as editor_routers
@@ -30,6 +35,8 @@ app.include_router(editor_routers)
 @app.get("/")
 def root():
     return {"status": "ok", "message": "FastAPI server is running 🚀"}
+
+app.mount("/media", StaticFiles(directory="media"), name="media")
 
 @app.websocket("/ws/editor/{job_id}")
 async def editor_ws(websocket: WebSocket, job_id: str):

@@ -4,4 +4,7 @@ uvicorn
 pydantic
 dotenv
 pillow
-rich  // For rich text and beautiful formatting in the terminal
+rich  
+python-multipart
+huggingface_hub
+git+https://github.com/huggingface/transformers.git@c3fb1b1a6ca1102f62b139c83a088a97e5a55477

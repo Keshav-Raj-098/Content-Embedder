@@ -11,3 +11,8 @@ wheels/
 .env
 venv/
 env/
+
+uploads/
+logs/
+media/
+commands.txt
