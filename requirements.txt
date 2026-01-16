@@ -1,9 +1,12 @@
 opencv-python
+torch
+torchvision
 fastapi
 uvicorn
 pydantic
 dotenv
 pillow
+accelerate
 rich  
 python-multipart
 huggingface_hub

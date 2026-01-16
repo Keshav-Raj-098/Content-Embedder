@@ -9,7 +9,8 @@ import os
 @dataclass
 class VideoState:
     frames: List[np.ndarray] = field(default_factory=list)
-    frame_rgb: List[Image.Image] = field(default_factory=list) 
+    frame_rgb: List[Image.Image] = field(default_factory=list)
+    masks_by_frame: List[np.ndarray] = field(default_factory=list)
     fps: float = 30.0
     video_path: str | None = field(default=None)
     height: int = 0
@@ -42,32 +43,32 @@ class AdState:
     height: int = 0
     width: int = 0
     corners: Optional[np.ndarray] = None  # [[0,0],[w,0],[w,h],[0,h]]
+    ad_path: str | None = None
 
 
 @dataclass
 class PlacementState:
-    x: int = 0
-    y: int = 0
-    scale: float = 1.0
-
-    w: int = 0
-    h: int = 0
-
     corner_offsets: np.ndarray | None = None
     quad: np.ndarray | None = None
 
+
+@dataclass
+class TrackingState:
+    prev_gray: Optional[np.ndarray] = None
+    prev_pts: Optional[np.ndarray] = None   # Nx1x2
+    active: bool = False
 
 
 
 
 @dataclass
 class APPState:
-    
         
     def __init__(self):
         self.video = VideoState()
         self.placement = PlacementState()
         self.ad = AdState()
+        self.tracking = TrackingState()
 
         self.reset()
         
@@ -75,7 +76,7 @@ class APPState:
     video: VideoState = field(default_factory=VideoState)
     ad: AdState = field(default_factory=AdState)
     placement: PlacementState = field(default_factory=PlacementState)
-    # tracking: TrackingState = field(default_factory=TrackingState)
+    tracking: TrackingState = field(default_factory=TrackingState)
     
 
     
@@ -84,7 +85,7 @@ class APPState:
         self.video.delete_video_file()
         self.video = VideoState()
         self.placement = PlacementState()
-        # self.tracking = TrackingState()
+        self.tracking = TrackingState()
 
 
 
