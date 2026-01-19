@@ -286,8 +286,8 @@ def process_video_with_planar_tracking(state:APPState) -> dict:
     # --- encode video using ffmpeg ---
     encode_video_ffmpeg(frames_dir, output_video_path, fps)
     
-    # if frames_dir.exists():
-    #     shutil.rmtree(frames_dir)
+    if frames_dir.exists():
+        shutil.rmtree(frames_dir)
 
     return {
         "status": "success",
