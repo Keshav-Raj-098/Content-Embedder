@@ -47,7 +47,7 @@ def load_video(video_path: str) -> dict:
         raise VideoLoadError("Failed to open video")
 
     fps = cap.get(cv2.CAP_PROP_FPS)
-    # frames_dir = dir_manager.prepare_frames_dir()   ## disable saving frames to disk for now
+    frames_dir = dir_manager.prepare_frames_dir()   ## disable saving frames to disk for now
     frame_idx = 0
     frames_rgb = []
     frames_bgr = []
@@ -61,8 +61,8 @@ def load_video(video_path: str) -> dict:
             cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
         )
         frames_rgb.append(frame_rgb)
-        # frame_path = frames_dir / f"frame_{frame_idx:06d}.jpg" ## disable saving frames to disk for now
-        # frame_rgb.save(frame_path, format="JPEG", quality=95)  ## disable saving frames to disk for now
+        frame_path = frames_dir / f"frame_{frame_idx:06d}.jpg" ## disable saving frames to disk for now
+        frame_rgb.save(frame_path, format="JPEG", quality=95)  ## disable saving frames to disk for now
         
         frame_idx += 1
 
@@ -242,37 +242,42 @@ def get_frame_url(frame_idx: int) -> str:
 
 
 
-def process_video_with_planar_tracking(app_state: APPState) -> dict:
+def process_video_with_planar_tracking(state:APPState) -> dict:
     tracker = PlanarTracker()
-    tracker.initialize(app_state)
+    tracker.initialize(state)
 
     frames_dir, output_video_path = dir_manager.prepare_output_paths()
 
-    fps = app_state.video.fps
-    h = app_state.video.height
-    w = app_state.video.width
+    fps = state.video.fps
+    h = state.video.height
+    w = state.video.width
 
     # --- write FIRST frame ---
-    first_frame = app_state.video.frames[0]
+    out0 = render_ad_on_frame(state, 0)
+
+    assert out0.shape[:2] == (h, w)
+    assert out0.dtype == np.uint8
+
     cv2.imwrite(
         str(frames_dir / "frame_000000.jpg"),
-        first_frame
+        out0
     )
 
     # --- frame loop ---
-    for i in range(1, app_state.video.num_frames):
-        ok = tracker.update(app_state, i)
+    for i in range(1, state.video.num_frames):
+        ok = tracker.update(state, i)
 
         if not ok:
-            frame = app_state.video.frames[i]
+            frame = state.video.frames[i]
             out = frame
         else:
-            out = render_ad_on_frame(app_state, i)
+            out = render_ad_on_frame(state, i)
 
         # SAFETY CHECKS (important)
         assert out.shape[:2] == (h, w)
         assert out.dtype == np.uint8
 
+    #   --- save frame to disk ---
         cv2.imwrite(
             str(frames_dir / f"frame_{i:06d}.jpg"),
             out
@@ -280,11 +285,14 @@ def process_video_with_planar_tracking(app_state: APPState) -> dict:
 
     # --- encode video using ffmpeg ---
     encode_video_ffmpeg(frames_dir, output_video_path, fps)
+    
+    # if frames_dir.exists():
+    #     shutil.rmtree(frames_dir)
 
     return {
         "status": "success",
         "video_url": f"/media/output_videos/{output_video_path.name}",
-        "total_frames": app_state.video.num_frames,
+        "total_frames": state.video.num_frames,
         "fps": fps,
         "resolution": f"{w}x{h}",
     }

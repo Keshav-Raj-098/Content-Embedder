@@ -4,6 +4,7 @@ import numpy as np
 from dataclasses import dataclass, field
 from typing import List, Optional
 import os
+import shutil
 
 
 @dataclass
@@ -13,6 +14,7 @@ class VideoState:
     masks_by_frame: List[np.ndarray] = field(default_factory=list)
     fps: float = 30.0
     video_path: str | None = field(default=None)
+    frames_dir: str | None = field(default=None)
     height: int = 0
     width: int = 0
     current_frame_idx: int = 0
@@ -35,6 +37,10 @@ class VideoState:
     def delete_video_file(self):
         if self.video_path and os.path.exists(self.video_path):
             os.remove(self.video_path)
+        
+        # Delete frames directory if it exists
+        if self.frames_dir and os.path.exists(self.frames_dir):
+            shutil.rmtree(self.frames_dir)
     
     
 @dataclass
@@ -44,6 +50,13 @@ class AdState:
     width: int = 0
     corners: Optional[np.ndarray] = None  # [[0,0],[w,0],[w,h],[0,h]]
     ad_path: str | None = None
+    
+    
+    def delete_ad_file(self):
+        if self.ad_path and os.path.exists(self.ad_path):
+            os.remove(self.ad_path)
+
+
 
 
 @dataclass
@@ -83,6 +96,7 @@ class APPState:
     def reset(self):
 
         self.video.delete_video_file()
+        self.ad.delete_ad_file()
         self.video = VideoState()
         self.placement = PlacementState()
         self.tracking = TrackingState()

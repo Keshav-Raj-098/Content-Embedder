@@ -1,13 +1,10 @@
 from fastapi import APIRouter, Request,HTTPException,status,UploadFile, File
-from fastapi.responses import JSONResponse,StreamingResponse
-import io
+from fastapi.responses import JSONResponse
 
 from src.controllers import editor_controller
 from src.schemas.editor_request import * 
 from src.controllers.exceptions import VideoLoadError
 
-import tempfile
-import shutil
 import uuid
 import os
 from src.state import app_state
@@ -240,13 +237,13 @@ async def get_input_frame(idx: int):
 
 
    
-@router.post("/reset")
+@router.post("/reset-session")
 async def reset_editor():
     """
     Reset the editor state.
     """
     try:
-        # editor_controller.reset_app_state()
+        app_state.reset()
         pass
         return JSONResponse(
             status_code=status.HTTP_200_OK,
@@ -259,8 +256,74 @@ async def reset_editor():
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Unexpected error while resetting editor state",
         )
+
+
+
+@router.post("/propagete-ad-placement")
+def propagate_ad_placement_endpoint():
+    """
+    Propagate ad placement across all video frames.
+    """
+    try:
+        result = editor_controller.process_video_with_planar_tracking(state=app_state)
         
-        
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content=result
+        )
+    
+    except VideoLoadError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+    
+    except Exception as e:
+        print("ERROR IN AD PLACEMENT PROPAGATION:", str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Unexpected error during ad placement propagation: {str(e)}",
+        )     
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+       
 # @router.post("/track-placement")
 # async def track_placement_endpoint():
 #     """
@@ -516,29 +579,3 @@ async def reset_editor():
 #             detail=f"Unexpected error getting tracking summary: {str(e)}",
 #         )
         
-
-@router.post("/propagete-ad-placement")
-def propagate_ad_placement_endpoint():
-    """
-    Propagate ad placement across all video frames.
-    """
-    try:
-        result = editor_controller.process_video_with_planar_tracking(app_state)
-        
-        return JSONResponse(
-            status_code=status.HTTP_200_OK,
-            content=result
-        )
-    
-    except VideoLoadError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
-        )
-    
-    except Exception as e:
-        print("ERROR IN AD PLACEMENT PROPAGATION:", str(e))
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Unexpected error during ad placement propagation: {str(e)}",
-        )
